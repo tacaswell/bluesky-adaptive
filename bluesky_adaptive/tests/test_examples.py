@@ -22,6 +22,7 @@ def test_sequence_smoke(RE, hw):
 
 
 def test_learner2D_smoke(RE, hw):
+    hw.det4.kind = 'hinted'
     RE(
         learner_plan(
             [hw.det4],
