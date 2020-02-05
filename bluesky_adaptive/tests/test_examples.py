@@ -5,9 +5,19 @@ from bluesky_adaptive.plans import learner_plan
 
 
 class LearnerForTesting(SequenceLearner):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._index_map = {}
+
     def ask(self, n, tell_pending=True):
         pts, loss = super().ask(n, tell_pending)
+        self._index_map.update({tuple(pt[1]): pt[0] for pt in pts})
+
         return [pt[1] for pt in pts], loss
+
+    def tell(self, x, y):
+        x = [self._index_map.pop(tuple(x)), x]
+        super().tell(x, y)
 
 
 def test_sequence_smoke(RE, hw):
