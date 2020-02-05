@@ -84,14 +84,19 @@ def learner_queue(dets, motors, queue, *, md=None, step_plan=None):
     return (yield from inner())
 
 
-def inter_plan_learner(dets, motors, acq_plan, pt0, queue, *, mv_plan=None, md=None):
-    _md = {"adaptive_group": str(uuid.uuid4())}
+def inter_plan_learner(dets, sample_range, acq_plan, queue, *, mv_plan=None, md=None):
+    motors = list(sample_range)
+    _md = {
+        "adaptive_group": str(uuid.uuid4()),
+        "sample_range": {m.name: v for m, v in sample_range.items()},
+    }
     _md.update(md or {})
+
     motor_map = {m.name: m for m in motors}
     if mv_plan is None:
         mv_plan = bps.mv
 
-    next_point = pt0
+    next_point = {m.name: r[0] for m, r in sample_range.items()}
     while next_point is not None:
 
         yield from mv_plan(
@@ -100,4 +105,3 @@ def inter_plan_learner(dets, motors, acq_plan, pt0, queue, *, mv_plan=None, md=N
 
         yield from acq_plan(dets + motors, md=_md)
         next_point = queue.get(timeout=1)
-
