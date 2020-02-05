@@ -80,6 +80,3 @@ def learner_queue(dets, motors, queue, *, md=None, step_plan=None):
             yield from bps.trigger_and_read(dets + motors)
 
     return (yield from inner())
-
-
-plan = learner_callback_plan

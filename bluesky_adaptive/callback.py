@@ -16,14 +16,12 @@ class AdaptiveCallback(DocumentRouter):
         # TODO extract dimensions
         dimensions = doc["hints"]["dimensions"]
         self._endogenous_keys = [d for ((d,), s) in dimensions]
-        print("in start", self._endogenous_keys)
 
         # send out the first request
         xs, _ = self.learner.ask(1)
         if not len(xs):
             self.out_queue.put(None)
         (x_out,) = xs
-        print(f"putting {x_out} in start")
         self.out_queue.put(x_out)
 
     def descriptor(self, doc):
@@ -35,7 +33,6 @@ class AdaptiveCallback(DocumentRouter):
         self._exogenous_keys = tuple(
             reduce(operator.add, (d["fields"] for d in hints.values()), [])
         )
-        print(self._exogenous_keys)
 
     def event(self, doc):
         ret = doc["data"]
@@ -45,16 +42,13 @@ class AdaptiveCallback(DocumentRouter):
         self.learner.tell(x, y)
 
         if self.goal(self.learner):
-            print("putting done!")
             self.out_queue.put(None)
             return
 
         xs, _ = self.learner.ask(1)
         if not len(xs):
-            print("putting done!")
             self.out_queue.put(None)
             return
 
         (x_out,) = xs
-        print(f"putting {x_out}!")
         self.out_queue.put(x_out)
