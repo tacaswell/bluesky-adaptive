@@ -45,18 +45,29 @@ def learner_plan(dets, motors, learner, goal, *, md=None):
     return (yield from inner())
 
 
-def learner_callback_plan(dets, motors, learner, goal, *, md=None):
+def learner_callback_plan(dets, motors, learner, goal, **kwargs):
+    queue = Queue()
+    callback = AdaptiveCallback(learner, goal, queue)
+
+    return (
+        yield from bpp.subs_wrapper(
+            learner_queue(dets, motors, queue, **kwargs), callback
+        )
+    )
+
+
+def learner_queue(dets, motors, queue, *, md=None, step_plan=None):
+
+    if step_plan is None:
+
+        def step_plan(motors, x):
+            yield from bps.mov(*itertools.chain(*zip(motors, x)))
 
     dimensions = [(motor.hints["fields"], "primary") for motor in motors]
     _md = {"hints": {}}
     _md.update(md or {})
     _md["hints"].setdefault("dimensions", dimensions)
 
-    queue = Queue()
-
-    callback = AdaptiveCallback(learner, goal, queue)
-
-    @bpp.subs_decorator(callback)
     @bpp.stage_decorator(dets + motors)
     @bpp.run_decorator(md=_md)
     def inner():
@@ -65,7 +76,7 @@ def learner_callback_plan(dets, motors, learner, goal, *, md=None):
             if x is None:
                 return
 
-            yield from bps.mov(*itertools.chain(*zip(motors, x)))
+            yield from step_plan(motors, x)
             yield from bps.trigger_and_read(dets + motors)
 
     return (yield from inner())
