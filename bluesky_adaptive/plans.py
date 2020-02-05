@@ -5,6 +5,8 @@ from functools import reduce
 import bluesky.preprocessors as bpp
 import bluesky.plan_stubs as bps
 import itertools
+import uuid
+
 from queue import Queue
 
 
@@ -80,3 +82,22 @@ def learner_queue(dets, motors, queue, *, md=None, step_plan=None):
             yield from bps.trigger_and_read(dets + motors)
 
     return (yield from inner())
+
+
+def inter_plan_learner(dets, motors, acq_plan, pt0, queue, *, mv_plan=None, md=None):
+    _md = {"adaptive_group": str(uuid.uuid4())}
+    _md.update(md or {})
+    motor_map = {m.name: m for m in motors}
+    if mv_plan is None:
+        mv_plan = bps.mv
+
+    next_point = pt0
+    while next_point is not None:
+
+        yield from mv_plan(
+            *itertools.chain(*((motor_map[k], v) for k, v in next_point.items()))
+        )
+
+        yield from acq_plan(dets + motors, md=_md)
+        next_point = queue.get(timeout=1)
+
