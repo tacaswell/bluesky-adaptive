@@ -1,7 +1,7 @@
 from adaptive.learner.sequence_learner import SequenceLearner
 from adaptive.learner.learner2D import Learner2D
-
-from bluesky_adaptive.plans import learner_plan
+import pytest
+from bluesky_adaptive.plans import learner_plan, learner_callback_plan
 
 
 class LearnerForTesting(SequenceLearner):
@@ -20,21 +20,23 @@ class LearnerForTesting(SequenceLearner):
         super().tell(x, y)
 
 
-def test_sequence_smoke(RE, hw):
+@pytest.mark.parametrize("plan", [learner_plan, learner_callback_plan])
+def test_sequence_smoke(RE, hw, plan):
     RE(
-        learner_plan(
+        plan(
             [hw.det, hw.det1],
             [hw.motor, hw.motor1],
-            LearnerForTesting(None, [[1, 1], [2, 2], [3, 3]]),
+            LearnerForTesting(None, [[1, 1], [2.2, 2], [3, 3], [4, 4]]),
             lambda x: x.done(),
         )
     )
 
 
-def test_learner2D_smoke(RE, hw):
-    hw.det4.kind = 'hinted'
+@pytest.mark.parametrize("plan", [learner_plan, learner_callback_plan])
+def test_learner2D_smoke(RE, hw, plan):
+    hw.det4.kind = "hinted"
     RE(
-        learner_plan(
+        plan(
             [hw.det4],
             [hw.motor1, hw.motor2],
             Learner2D(None, [(-5.0, 5.0), (-3.0, 3.0)]),
