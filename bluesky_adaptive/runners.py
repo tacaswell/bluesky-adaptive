@@ -34,18 +34,21 @@ def generator(learner, goal=None):
 
     Receives
     --------
+    x : value in domain of function
+       Where it was actually measured
     y : value in the image of the function
-
+       Value where it was measured
     """
     if goal is None:
 
-        def goal(x):
-            return x.done()
+        def goal(learner):
+            return learner.done()
 
     while not goal(learner):
         xs, _ = learner.ask(1)
+        # ask is "up to n", might be empty list
         if not len(xs):
             break
-        (x,) = xs
-        y = yield x
-        learner.tell(x, y)
+        (x_out,) = xs
+        (x_in, y) = yield x_out
+        learner.tell(x_in, y)
