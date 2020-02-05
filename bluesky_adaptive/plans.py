@@ -10,7 +10,7 @@ import uuid
 from queue import Queue
 
 
-def learner_plan(dets, motors, learner, goal, *, md=None):
+def embeded_learner(dets, motors, learner, goal, *, md=None):
 
     exogenous_keys = tuple(reduce(operator.add, (d.hints["fields"] for d in dets), []))
     dimensions = [(motor.hints["fields"], "primary") for motor in motors]
@@ -53,12 +53,12 @@ def learner_callback_plan(dets, motors, learner, goal, **kwargs):
 
     return (
         yield from bpp.subs_wrapper(
-            learner_queue(dets, motors, queue, **kwargs), callback
+            intra_plan_learner(dets, motors, queue, **kwargs), callback
         )
     )
 
 
-def learner_queue(dets, motors, queue, *, md=None, step_plan=None):
+def intra_plan_learner(dets, motors, queue, *, md=None, step_plan=None):
 
     if step_plan is None:
 
